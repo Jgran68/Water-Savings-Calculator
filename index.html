@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Water Savings Calculator with CSV Export</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f4f9fb;
+    }
+    h2 {
+      color: #0077aa;
+    }
+    input, select, button {
+      margin: 8px 0;
+      padding: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    table {
+      margin-top: 25px;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 900px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #e0f0fa;
+    }
+    .button-container {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Water Waste & Impact Calculator</h2>
+
+  <label for="drains">Number of Drains:</label>
+  <input type="number" id="drains" value="500">
+
+  <label for="volume">Water per Drain (liters):</label>
+  <input type="number" id="volume" step="0.1" value="0.5">
+
+  <label for="frequency">Frequency (per day):</label>
+  <input type="number" id="frequency" value="1">
+
+  <label for="cost">Cost per Liter (e.g., 0.004 AUD):</label>
+  <input type="number" id="cost" step="0.0001" value="0.004">
+
+  <label for="co2">CO₂ Emissions per Liter (kg/L):</label>
+  <input type="number" id="co2" step="0.0001" value="0.0003">
+
+  <label for="energy">Energy per Liter (kWh/L):</label>
+  <input type="number" id="energy" step="0.001" value="0.002">
+
+  <div class="button-container">
+    <button onclick="calculateWaste()">Calculate</button>
+    <button onclick="downloadCSV()">Download CSV</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Period</th>
+        <th>Water Wasted (L)</th>
+        <th>Total Cost</th>
+        <th>CO₂ Emissions (kg)</th>
+        <th>Energy Use (kWh)</th>
+      </tr>
+    </thead>
+    <tbody id="results">
+      <tr><td>Daily</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Monthly</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Annually</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    let currentResults = [];
+
+    function calculateWaste() {
+      const drains = parseFloat(document.getElementById('drains').value);
+      const volume = parseFloat(document.getElementById('volume').value);
+      const frequency = parseFloat(document.getElementById('frequency').value);
+      const cost = parseFloat(document.getElementById('cost').value);
+      const co2 = parseFloat(document.getElementById('co2').value);
+      const energy = parseFloat(document.getElementById('energy').value);
+
+      const daily = drains * volume * frequency;
+      const monthly = daily * 30;
+      const yearly = daily * 365;
+
+      const results = [
+        {
+          period: 'Daily',
+          liters: daily.toFixed(2),
+          cost: (daily * cost).toFixed(2),
+          co2: (daily * co2).toFixed(2),
+          energy: (daily * energy).toFixed(2)
+        },
+        {
+          period: 'Monthly',
+          liters: monthly.toFixed(2),
+          cost: (monthly * cost).toFixed(2),
+          co2: (monthly * co2).toFixed(2),
+          energy: (monthly * energy).toFixed(2)
+        },
+        {
+          period: 'Annually',
+          liters: yearly.toFixed(2),
+          cost: (yearly * cost).toFixed(2),
+          co2: (yearly * co2).toFixed(2),
+          energy: (yearly * energy).toFixed(2)
+        }
+      ];
+
+      currentResults = results;
+
+      document.getElementById('results').innerHTML = results.map(r => `
+        <tr>
+          <td>${r.period}</td>
+          <td>${r.liters} L</td>
+          <td>$${r.cost}</td>
+          <td>${r.co2} kg</td>
+          <td>${r.energy} kWh</td>
+        </tr>
+      `).join('');
+    }
+
+    function downloadCSV() {
+      if (!currentResults.length) {
+        alert("Please calculate first.");
+        return;
+      }
+
+      const headers = ['Period', 'Water Wasted (L)', 'Total Cost', 'CO₂ Emissions (kg)', 'Energy Use (kWh)'];
+      const rows = currentResults.map(r => [
+        r.period, r.liters, r.cost, r.co2, r.energy
+      ]);
+
+      let csvContent = "data:text/csv;charset=utf-8," 
+        + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "water_savings_summary.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+
+</body>
+</html>
+
